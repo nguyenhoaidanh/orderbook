@@ -1,0 +1,1 @@
+export const ORDER_BOOK_VISIBLE_ROWS = 6

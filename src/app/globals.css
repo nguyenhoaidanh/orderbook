@@ -1,0 +1,18 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+/* Thin scrollbar */
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgb(255 255 255 / 0.2);
+    border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgb(255 255 255 / 0.35);
+}
