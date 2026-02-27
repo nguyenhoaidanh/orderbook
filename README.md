@@ -176,9 +176,10 @@ src/
 │       └── token-selector.tsx          # Token selector component
 ├── hooks/
 │   └── order-book/
-│       ├── use-order-book-socket.ts    # WebSocket connection & message processing
-│       ├── use-order-book-data.ts      # Order book display logic
-│       └── use-order-book-panel.ts     # Panel state management
+│       ├── use-process-order.ts              # Message processing, throttled state sync
+│       ├── use-connect-order-book-socket.ts  # WebSocket connection & subscribe lifecycle
+│       ├── use-order-book-data.ts            # Order book display logic
+│       └── use-order-book-display.ts         # Panel state management
 ├── store/
 │   └── order-book-store.ts             # Zustand store
 ├── types/

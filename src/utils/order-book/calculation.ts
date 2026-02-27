@@ -1,7 +1,7 @@
 import { AssetType } from "@/store/order-book-store"
 import { OrderBookLevel } from "@/types/order-book"
 
-export function patchOrderLevels(map: Map<string, bigint>, orders: OrderBookLevel[]) {
+export function patchOrderLevels(map: Map<string, bigint>, orders: OrderBookLevel[]): void {
     orders.forEach(({ price, quantity }) => {
         const qty = BigInt(quantity)
         if (qty === 0n) {

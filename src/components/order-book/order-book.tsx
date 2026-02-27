@@ -6,7 +6,7 @@ import { useEffect } from "react"
 import ModalSelectMarket from "@/components/modal/select-market/modal-select-market"
 import OrderBookPanel from "@/components/order-book/order-book-panel"
 import { useOrderBookData } from "@/hooks/order-book/use-order-book-data"
-import { useOrderBookSocket } from "@/hooks/order-book/use-order-book-socket"
+import { useProcessOrder } from "@/hooks/order-book/use-process-order"
 import { useOrderBookStore } from "@/store/order-book-store"
 import { Market } from "@/types/market"
 
@@ -14,7 +14,7 @@ export default function OrderBook({ markets: marketList }: { markets: Market[] }
     const setMarketList = useOrderBookStore((s) => s.setMarketList)
     const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure()
     const orderBookData = useOrderBookData()
-    useOrderBookSocket()
+    useProcessOrder()
 
     useEffect(() => {
         setMarketList(marketList)

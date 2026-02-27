@@ -1,4 +1,3 @@
-import { config } from "@/config"
 import {
     MessageAction,
     OrderBookData,
@@ -7,32 +6,13 @@ import {
 } from "@/utils/order-book/msg-processor"
 import { throttle } from "@/utils/throttle"
 import { useCallback, useEffect, useRef, useState } from "react"
-import useWebSocket, { ReadyState } from "react-use-websocket"
 import { useShallow } from "zustand/react/shallow"
 
 import { selectSelectedMarket, useOrderBookStore } from "@/store/order-book-store"
-import { WsChannel } from "@/types/order-book"
 
-// Returns true for one render when the browser comes back online,
-// forcing a fresh WebSocket instance after exhausted reconnect attempts.
-function useNeedReconnect(): boolean {
-    const [needReconnect, setNeedReconnect] = useState(false)
+import { useConnectOrderBookSocket } from "./use-connect-order-book-socket"
 
-    useEffect(() => {
-        const handleOnline = () => setNeedReconnect(true)
-        window.addEventListener("online", handleOnline)
-        return () => window.removeEventListener("online", handleOnline)
-    }, [])
-
-    useEffect(() => {
-        if (needReconnect) setNeedReconnect(false)
-    }, [needReconnect])
-
-    return needReconnect
-}
-
-export function useOrderBookSocket() {
-    // Subscribe to only the store slices needed to avoid unnecessary re-renders
+export function useProcessOrder(): void {
     const { setOrderBook, setHasSnapshot, resetOrderBook, setConnected } = useOrderBookStore(
         useShallow((s) => ({
             setOrderBook: s.setOrderBook,
@@ -47,7 +27,7 @@ export function useOrderBookSocket() {
     // Mutable in-memory order book state — kept in a ref to avoid triggering renders on every update
     const internalRef = useRef(newOrderBookData())
     // Incrementing this value forces a re-subscribe (e.g. after a CRC32 checksum mismatch)
-    const [resubscribeTrigger, setResubscribeTrigger] = useState(0)
+    const [shouldResubscribe, setShouldResubscribe] = useState(0)
 
     // Throttle React state updates to at most once every XX ms to prevent excessive renders
     const syncThrottled = useRef(
@@ -78,7 +58,7 @@ export function useOrderBookSocket() {
 
             switch (result.action) {
                 case MessageAction.Resubscribe:
-                    setResubscribeTrigger((t) => t + 1)
+                    setShouldResubscribe((t) => t + 1)
                     break
                 case MessageAction.Commit:
                     if (result.isSnapshot) setHasSnapshot(true)
@@ -92,49 +72,16 @@ export function useOrderBookSocket() {
         [setHasSnapshot, selectedMarket]
     )
 
-    const needReconnect = useNeedReconnect()
-
-    const { sendMessage, readyState } = useWebSocket(
-        config.wsUrl,
-        {
-            shouldReconnect: () => true,
-            reconnectAttempts: 10,
-            reconnectInterval: 3000,
-            onClose: onReset,
-            onMessage: handleMessage,
-        },
-        !needReconnect
-    )
-
-    // Keep the connection status in the global store in sync with the WebSocket ready state
-    useEffect(() => {
-        setConnected(readyState === ReadyState.OPEN)
-    }, [readyState, setConnected])
-
     // Reset order book data whenever the selected market changes
     useEffect(() => {
         onReset()
     }, [selectedMarket, onReset])
 
-    // Subscribe / unsubscribe to the orderbook channel for the selected market.
-    // Re-runs when the market changes, the socket reconnects, or a resubscribe is triggered.
-    useEffect(() => {
-        if (readyState !== ReadyState.OPEN || !selectedMarket) return
-
-        sendMessage(
-            JSON.stringify({
-                method: "subscribe",
-                params: {
-                    channel: WsChannel.Orderbook,
-                    market_ids: [parseInt(selectedMarket.market_id)],
-                },
-            })
-        )
-
-        return () => {
-            sendMessage(
-                JSON.stringify({ method: "unsubscribe", params: { channel: WsChannel.Orderbook } })
-            )
-        }
-    }, [selectedMarket, readyState, sendMessage, resubscribeTrigger])
+    useConnectOrderBookSocket({
+        selectedMarket,
+        shouldResubscribe,
+        onReset,
+        onMessage: handleMessage,
+        setConnected,
+    })
 }

@@ -4,7 +4,7 @@ import { useState } from "react"
 
 import { selectSelectedMarket, useOrderBookStore } from "@/store/order-book-store"
 
-const TICK_MULTIPLIERS = [1, 2, 4, 10, 20, 50, 100]
+const TICK_MULTIPLIERS: readonly number[] = [1, 2, 4, 10, 20, 50, 100]
 
 export default function OrderBookTickSetting() {
     const { tickMultiplier, setTickMultiplier } = useOrderBookStore()
@@ -13,9 +13,9 @@ export default function OrderBookTickSetting() {
 
     const stepPrice = market ? BigInt(market.config.step_price) : 0n
 
-    const label = (m: number) => (stepPrice ? formatWei(stepPrice * BigInt(m)) : String(m))
+    const label = (m: number): string => (stepPrice ? formatWei(stepPrice * BigInt(m)) : String(m))
 
-    const select = (m: number) => {
+    const select = (m: number): void => {
         setTickMultiplier(m)
         setOpen(false)
     }

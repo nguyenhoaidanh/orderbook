@@ -5,7 +5,7 @@ export function formatWei(value: bigint | string): string {
     return formatNumber(formatEther(typeof value === "string" ? BigInt(value) : value))
 }
 
-function formatNumber(x: string | number) {
+function formatNumber(x: string | number): string {
     const num = !x ? 0 : Number(x)
 
     // Large numbers (≥1M) use compact notation: 1.23M, 4.5B, etc.

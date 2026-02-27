@@ -18,7 +18,7 @@ export default function AssetTypeSelect({
 }: AssetTypeSelectProps) {
     const [open, setOpen] = useState(false)
 
-    const select = (type: AssetType) => {
+    const select = (type: AssetType): void => {
         onChange(type)
         setOpen(false)
     }
