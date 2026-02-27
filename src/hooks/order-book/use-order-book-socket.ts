@@ -1,8 +1,8 @@
 import { config } from "@/config"
 import {
-    InternalStore,
     MessageAction,
-    newInternalStore,
+    OrderBookData,
+    newOrderBookData,
     processMessageByChannel,
 } from "@/utils/order-book/msg-processor"
 import { throttle } from "@/utils/throttle"
@@ -27,13 +27,13 @@ export function useOrderBookSocket() {
     const selectedMarket = useOrderBookStore(selectSelectedMarket)
 
     // Mutable in-memory order book state — kept in a ref to avoid triggering renders on every update
-    const internalRef = useRef(newInternalStore())
+    const internalRef = useRef(newOrderBookData())
     // Incrementing this value forces a re-subscribe (e.g. after a CRC32 checksum mismatch)
     const [resubscribeTrigger, setResubscribeTrigger] = useState(0)
 
     // Throttle React state updates to at most once every XX ms to prevent excessive renders
     const syncThrottled = useRef(
-        throttle((store: InternalStore) => {
+        throttle((store: OrderBookData) => {
             setOrderBook(new Map(store.ask), new Map(store.bid))
         }, 300)
     )
@@ -43,7 +43,7 @@ export function useOrderBookSocket() {
 
     // Clear internal state and reset the store when the market changes or the socket closes
     const onReset = useCallback(() => {
-        internalRef.current = newInternalStore()
+        internalRef.current = newOrderBookData()
         resetOrderBook()
     }, [resetOrderBook])
 

@@ -20,6 +20,22 @@ function sumOrderBookSide(prices: string[], map: Map<string, bigint>): bigint {
     return prices.reduce((acc, price) => acc + (map.get(price) ?? 0n), 0n)
 }
 
+export function computeBuySellPercentage(
+    slicedAsks: string[],
+    askMap: Map<string, bigint>,
+    slicedBids: string[],
+    bidMap: Map<string, bigint>
+): { buyPercentage: number; sellPercentage: number } {
+    let totalAsk = 0n
+    let totalBid = 0n
+    for (const price of slicedAsks) totalAsk += askMap.get(price) || 0n
+    for (const price of slicedBids) totalBid += bidMap.get(price) || 0n
+    const total = totalBid + totalAsk
+    if (total === 0n) return { buyPercentage: 50, sellPercentage: 50 }
+    const buy = Number((totalBid * 100n) / total)
+    return { buyPercentage: buy, sellPercentage: 100 - buy }
+}
+
 export function computeHighestRowValue(
     slicedAsks: string[],
     askMap: Map<string, bigint>,

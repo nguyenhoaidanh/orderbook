@@ -1,4 +1,4 @@
-import { computeHighestRowValue } from "@/utils/order-book/calculation"
+import { computeBuySellPercentage, computeHighestRowValue } from "@/utils/order-book/calculation"
 import { useMemo } from "react"
 import { useShallow } from "zustand/react/shallow"
 
@@ -32,6 +32,7 @@ export function useOrderBookData() {
                 displayMode: s.displayMode,
             }))
         )
+
     const visibleRows =
         displayMode === DisplayMode.Default ? ORDER_BOOK_VISIBLE_ROWS : ORDER_BOOK_VISIBLE_ROWS * 2
     const selectedMarket = useOrderBookStore(selectSelectedMarket)
@@ -43,11 +44,11 @@ export function useOrderBookData() {
     )
 
     const groupedAskMap = useMemo(
-        () => (tickMultiplier <= 1 ? askMap : groupByTick(askMap, tickSize, tickMultiplier)),
+        () => groupByTick(askMap, tickSize, tickMultiplier),
         [askMap, tickSize, tickMultiplier]
     )
     const groupedBidMap = useMemo(
-        () => (tickMultiplier <= 1 ? bidMap : groupByTick(bidMap, tickSize, tickMultiplier)),
+        () => groupByTick(bidMap, tickSize, tickMultiplier),
         [bidMap, tickSize, tickMultiplier]
     )
 
@@ -99,20 +100,10 @@ export function useOrderBookData() {
         [previousMidPrice, midPrice]
     )
 
-    const { buyPercentage, sellPercentage } = useMemo(() => {
-        let totalBid = 0n
-        let totalAsk = 0n
-        for (const price of slicedAsks) {
-            totalAsk += groupedAskMap.get(price) || 0n
-        }
-        for (const price of slicedBids) {
-            totalBid += groupedBidMap.get(price) || 0n
-        }
-        const total = totalBid + totalAsk
-        if (total === 0n) return { buyPercentage: 50, sellPercentage: 50 }
-        const buy = Number((totalBid * 100n) / total)
-        return { buyPercentage: buy, sellPercentage: 100 - buy }
-    }, [groupedAskMap, groupedBidMap, slicedAsks, slicedBids])
+    const { buyPercentage, sellPercentage } = useMemo(
+        () => computeBuySellPercentage(slicedAsks, groupedAskMap, slicedBids, groupedBidMap),
+        [groupedAskMap, groupedBidMap, slicedAsks, slicedBids]
+    )
 
     return {
         market: selectedMarket,

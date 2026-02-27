@@ -3,7 +3,7 @@ import { computeOrderBookChecksum } from "@/utils/order-book/crc32"
 
 import { OrderBookMessageData, WsChannel, WsMessageType } from "@/types/order-book"
 
-export type InternalStore = {
+export type OrderBookData = {
     ask: Map<string, bigint>
     bid: Map<string, bigint>
 }
@@ -17,14 +17,14 @@ export enum MessageAction {
 export type MessageResult =
     | { action: MessageAction.Skip }
     | { action: MessageAction.Resubscribe }
-    | { action: MessageAction.Commit; store: InternalStore; isSnapshot: boolean }
+    | { action: MessageAction.Commit; store: OrderBookData; isSnapshot: boolean }
 
-export const newInternalStore = (): InternalStore => ({ ask: new Map(), bid: new Map() })
+export const newOrderBookData = (): OrderBookData => ({ ask: new Map(), bid: new Map() })
 
 function processOrderbookMessage(
     msg: OrderBookMessageData,
     selectedMarketId: string,
-    currentStore: InternalStore
+    currentStore: OrderBookData
 ): MessageResult {
     if (!msg.data) return { action: MessageAction.Skip }
 
@@ -34,7 +34,7 @@ function processOrderbookMessage(
 
     switch (msg.type) {
         case WsMessageType.Snapshot: {
-            const store = newInternalStore()
+            const store = newOrderBookData()
             patchOrderLevels(store.ask, asks)
             patchOrderLevels(store.bid, bids)
             return { action: MessageAction.Commit, store, isSnapshot: true }
@@ -61,7 +61,7 @@ function processOrderbookMessage(
 export function processMessageByChannel(
     raw: string,
     selectedMarketId: string,
-    currentStore: InternalStore
+    currentStore: OrderBookData
 ): MessageResult {
     let msg: OrderBookMessageData
     try {
