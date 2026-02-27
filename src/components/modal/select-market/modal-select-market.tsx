@@ -35,7 +35,7 @@ function ModalSelectMarket({
             hideCloseButton
             disableAnimation
         >
-            <ModalContent className="max-w-100 bg-orderBg md:p-4 p-3 pb-0 text-foreground dark h-fit max-h-[70vh] self-end sm:h-auto sm:max-h-none sm:self-auto">
+            <ModalContent className="max-w-100 bg-orderBg md:p-4 p-3 pb-0 text-foreground dark h-fit max-h-[70vh] self-end sm:h-auto sm:max-h-none sm:self-auto overflow-x-hidden">
                 <div className="flex items-center justify-between">
                     <div className="text-l font-medium">Select a market</div>
                     <Button
