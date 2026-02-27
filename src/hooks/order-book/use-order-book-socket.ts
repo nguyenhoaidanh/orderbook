@@ -13,6 +13,24 @@ import { useShallow } from "zustand/react/shallow"
 import { selectSelectedMarket, useOrderBookStore } from "@/store/order-book-store"
 import { WsChannel } from "@/types/order-book"
 
+// Returns true for one render when the browser comes back online,
+// forcing a fresh WebSocket instance after exhausted reconnect attempts.
+function useNeedReconnect(): boolean {
+    const [needReconnect, setNeedReconnect] = useState(false)
+
+    useEffect(() => {
+        const handleOnline = () => setNeedReconnect(true)
+        window.addEventListener("online", handleOnline)
+        return () => window.removeEventListener("online", handleOnline)
+    }, [])
+
+    useEffect(() => {
+        if (needReconnect) setNeedReconnect(false)
+    }, [needReconnect])
+
+    return needReconnect
+}
+
 export function useOrderBookSocket() {
     // Subscribe to only the store slices needed to avoid unnecessary re-renders
     const { setOrderBook, setHasSnapshot, resetOrderBook, setConnected } = useOrderBookStore(
@@ -74,13 +92,19 @@ export function useOrderBookSocket() {
         [setHasSnapshot, selectedMarket]
     )
 
-    const { sendMessage, readyState } = useWebSocket(config.wsUrl, {
-        shouldReconnect: () => true,
-        reconnectAttempts: 10,
-        reconnectInterval: 3000,
-        onClose: onReset,
-        onMessage: handleMessage,
-    })
+    const needReconnect = useNeedReconnect()
+
+    const { sendMessage, readyState } = useWebSocket(
+        config.wsUrl,
+        {
+            shouldReconnect: () => true,
+            reconnectAttempts: 10,
+            reconnectInterval: 3000,
+            onClose: onReset,
+            onMessage: handleMessage,
+        },
+        !needReconnect
+    )
 
     // Keep the connection status in the global store in sync with the WebSocket ready state
     useEffect(() => {
